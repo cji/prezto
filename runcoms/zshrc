@@ -11,3 +11,166 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
 fi
 
 # Customize to your needs...
+
+export PATH="$PATH:$HOME/go/bin"
+export PATH=$HOME/.rbenv/bin:/usr/local/bin:$HOME/.bin:$PATH
+
+# load rbenv automatically
+eval "$(rbenv init - zsh)"
+
+# Powerlevel9k Customization
+#POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context root_indicator dir vcs)
+#POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status background_jobs virtualenv rvm)
+#POWERLEVEL9K_VCS_SHOW_SUBMODULE_DIRTY=false
+#POWERLEVEL9K_HIDE_BRANCH_ICON=false
+#POWERLEVEL9K_STATUS_VERBOSE=false
+DEFAULT_USER=$USER
+
+# Heroku
+alias h='heroku'
+alias hs='heroku sudo'
+
+# show-struct https://github.com/ilyash/show-struct
+alias ss='show_struct.py'
+
+# PS
+alias psa="ps aux"
+
+# Moving around
+alias cdb='cd -'
+alias cls='clear;ls'
+
+# Show human friendly numbers and colors
+alias df='df -h'
+alias du='du -h -d 2'
+
+alias ll='ls -alGh'
+alias ls='ls -Gh'
+
+# Common shell functions
+alias less='less -r'
+alias tf='tail -f'
+alias l='less'
+alias lh='ls -alt | head' # see the last modified files
+alias screen='TERM=screen screen'
+alias cl='clear'
+
+# Grep Color
+export GREP_COLOR='1;33'
+
+alias git='noglob git'
+alias rm='nocorrect rm'
+
+set -o vi
+export EDITOR=vim
+export VISUAL=vim
+
+autoload -U zmv
+alias zmv="noglob zmv -W"
+
+# Global aliases
+alias -g ...='../..'
+alias -g ....='../../..'
+alias -g .....='../../../..'
+alias -g C='| wc -l'
+alias -g H='| head'
+alias -g L="| less"
+alias -g N="| /dev/null"
+alias -g S='| sort'
+alias -g G='| grep' # now you can do: ls foo G something
+
+alias nano='vim'
+
+alias mawsh='mosh --ssh="ssh -i ~/Downloads/chromedev.pem" admin@13.57.57.139'
+
+alias deploymaster='ion-client run -a deploymaster tmux -L $(whoami) new -A -s $(whoami)'
+# Google cloud SDK
+source ~/google-cloud-sdk/completion.zsh.inc
+source ~/google-cloud-sdk/path.zsh.inc
+
+# Functions
+#
+# (f)ind by (n)ame
+# usage: fn foo
+# to find all files containing 'foo' in the name
+function fn() { ls **/*$1* }
+
+#
+# Helper Functions
+#
+dcleanup(){
+	local containers
+	containers=( $(docker ps -aq 2>/dev/null) )
+	docker rm "${containers[@]}" 2>/dev/null
+	local volumes
+	volumes=( $(docker ps --filter status=exited -q 2>/dev/null) )
+	docker rm -v "${volumes[@]}" 2>/dev/null
+	local images
+	images=( $(docker images --filter dangling=true -q 2>/dev/null) )
+	docker rmi "${images[@]}" 2>/dev/null
+}
+del_stopped(){
+	local name=$1
+	local state
+	state=$(docker inspect --format "{{.State.Running}}" "$name" 2>/dev/null)
+
+	if [[ "$state" == "false" ]]; then
+		docker rm "$name"
+	fi
+}
+relies_on(){
+	for container in "$@"; do
+		local state
+		state=$(docker inspect --format "{{.State.Running}}" "$container" 2>/dev/null)
+
+		if [[ "$state" == "false" ]] || [[ "$state" == "" ]]; then
+			echo "$container is not running, starting it for you."
+			$container
+		fi
+	done
+}
+
+###
+### Awesome sauce by @jpetazzo
+###
+
+export DOCKER_REPO_PREFIX=cjingram
+
+if command -v "docker" &>/dev/null; then
+	command_not_found_handle () {
+		# Check if there is a container image with that name
+		if ! docker inspect --format '{{ .Author }}' "$1" >&/dev/null ; then
+			echo "$0: $1: command not found"
+			return
+		fi
+
+		# Check that it's really the name of the image, not a prefix
+		if docker inspect --format '{{ .Id }}' "$1" | grep -q "^$1" ; then
+			echo "$0: $1: command not found"
+			return
+		fi
+
+		docker run -ti -u "$(whoami)" -w "$HOME" \
+			"$(env | cut -d= -f1 | awk '{print "-e", $1}')" \
+			--device /dev/snd \
+			-v /etc/passwd:/etc/passwd:ro \
+			-v /etc/group:/etc/group:ro \
+			-v /etc/localtime:/etc/localtime:ro \
+			-v /home:/home \
+			-v /tmp/.X11-unix:/tmp/.X11-unix \
+			"${DOCKER_REPO_PREFIX}/${1}" "$@"
+	}
+fi
+
+cloud() {
+  eval "$(ion-client shell)"
+  cloud "$@"
+}
+
+fixkeys() {
+   eval "$(ssh-agent -s)"
+   ssh-add -K ~/.ssh/id_rsa
+}
+
+# Added by Krypton
+export GPG_TTY=$(tty)
