@@ -29,9 +29,7 @@ DEFAULT_USER=$USER
 # Heroku
 alias h='heroku'
 alias hs='heroku sudo'
-
-# show-struct https://github.com/ilyash/show-struct
-alias ss='show_struct.py'
+alias ic='ion-client'
 
 # PS
 alias psa="ps aux"
@@ -81,9 +79,7 @@ alias -g G='| grep' # now you can do: ls foo G something
 
 alias nano='vim'
 
-alias mawsh='mosh --ssh="ssh -i ~/Downloads/chromedev.pem" admin@13.57.57.139'
-
-alias deploymaster='ion-client run -a deploymaster tmux -L $(whoami) new -A -s $(whoami)'
+alias deploymaster='TERM=xterm-256color ion-client run -a deploymaster tmux -L $(whoami) new -A -s $(whoami)'
 # Google cloud SDK
 source ~/google-cloud-sdk/completion.zsh.inc
 source ~/google-cloud-sdk/path.zsh.inc
@@ -174,3 +170,24 @@ fixkeys() {
 
 # Added by Krypton
 export GPG_TTY=$(tty)
+
+# https://medium.com/@dubistkomisch/how-to-actually-get-italics-and-true-colour-to-work-in-iterm-tmux-vim-9ebe55ebc2be
+alias ssh='TERM=xterm-256color ssh'
+fpath+=${ZDOTDIR:-~}/.zsh_functions
+
+# https://blog.ropnop.com/docker-for-pentesters/
+alias dockershell="docker run --rm -i -t --entrypoint=/bin/bash"
+alias dockershellsh="docker run --rm -i -t --entrypoint=/bin/sh"
+
+function dockershellhere() {
+    dirname=${PWD##*/}
+    docker run --rm -it --entrypoint=/bin/bash -v `pwd`:/${dirname} -w /${dirname} "$@"
+}
+function dockershellshhere() {
+    dirname=${PWD##*/}
+    docker run --rm -it --entrypoint=/bin/sh -v `pwd`:/${dirname} -w /${dirname} "$@"
+}
+
+# https://github.com/kubernetes-sigs/krew
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+
